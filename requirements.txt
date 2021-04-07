@@ -1,0 +1,6 @@
+ccxt==1.42.47
+pandas==1.2.2
+numpy==1.20.1
+matplotlib==3.3.4
+plotly==4.14.3
+streamlit==0.79.0
