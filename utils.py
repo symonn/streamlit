@@ -39,7 +39,7 @@ def get_balance(exchange,currency):
     return(res[currency])
 
 
-def open_data(since,name=trades):
+def open_data(since,name):
     """
     Open data
     """
@@ -60,42 +60,41 @@ def get_trades(exchange,since):
 	trades = exchange.fetchMyTrades(symbol='BTC/USDT',since=since)
 	trades = pd.DataFrame(trades)
 	trades['datetime'] = pd.to_datetime(trades['datetime']).dt.tz_localize(None)
-	trades['datetime_str'] = trades['datetime'].apply(lambda x: x.strftime("%m/%d/%Y"))
-	trades['datetime'] = pd.to_datetime(trades['datetime_str'])
+	trades['day'] = trades['datetime'].apply(lambda x: x.strftime("%m/%d/%Y"))
 	trades = trades[trades['side']=='sell']
-	trades = trades[['datetime','datetime_str','symbol','side','cost']]
+	trades = trades[['datetime','day','symbol','side','cost']]
 	trades.sort_values(by=['datetime', 'symbol'], inplace=True)
 	trades = trades.reset_index(drop=True)
 	
 	return trades
 
+
 def get_statistics_on_trades(data):
 
     #data = data.reset_index()
 
-    data['Positives trades (%)'] = np.where(data['pourcentage']>0,1,0)
     data['# of trades'] = 1
 
-    data_grouped = data.groupby(['datetime','day'])['Positives trades (%)','# of trades'].sum()
-    data_grouped['Positives trades (%)'] = (data_grouped['Positives trades (%)']/data_grouped['# of trades']*100)
+    data_grouped = data.groupby(['day'])['# of trades'].sum()
 
-    grouped_day = data.groupby(by=['datetime','day'],as_index=False,sort=True)
-    data['Amount'] = grouped_day['wallet'].head(1)
-    data['last'] = grouped_day['benef'].tail(1)
-    first = data[['datetime','day','Amount']].dropna()
+
+    grouped_day = data.groupby(by=['day'],as_index=False,sort=False)
+    data['Amount'] = grouped_day['cost'].head(1)
+    data['last'] = grouped_day['cost'].tail(1)
+    first = data[['day','Amount']].dropna()
     first = first.reset_index(drop=True)
-    last = data[['datetime','day','last']].dropna()
+    last = data[['day','last']].dropna()
 
     data_grouped = data_grouped.reset_index()
     data_grouped = pd.merge(data_grouped,first,on='day')
     data_grouped = pd.merge(data_grouped,last,on='day')
     data_grouped['Earnings'] = data_grouped['last']-data_grouped['Amount']
     data_grouped['Earnings (%)'] = (data_grouped['last']-data_grouped['Amount'])/data_grouped['Amount']*100
-    data_grouped = data_grouped[['datetime','day','Amount','# of trades','Positives trades (%)','Earnings','Earnings (%)']]
-    data_grouped.sort_values(by=['datetime','day'], inplace=True)
+    data_grouped = data_grouped[['day','Amount','# of trades','Earnings','Earnings (%)']]
+    data_grouped.sort_values(by=['day'], inplace=True)
     data_grouped = data_grouped.reset_index(drop=True)
     data_grouped.sort_index(inplace=True)
-    data_grouped.drop(labels=['datetime'],axis=1,inplace=True)
+
     return data_grouped
     
 

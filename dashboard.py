@@ -9,7 +9,8 @@ from datetime import date
 from datetime import timedelta
 import time as time_true
 
-from utils import *
+import utils as utils
+import config as conf
 
 
 def main():
@@ -23,8 +24,8 @@ def main():
 
 
 	# ROW 2 ------------------------------------------------------------------------
-	exchange = initialize_exchange(market,api_key,secret_key)
-	balance = get_balance(exchange,currency)
+	exchange = utils.initialize_exchange(conf.market,conf.api_key,conf.secret_key)
+	balance = utils.get_balance(exchange,conf.currency)
 	wallet = round(balance['total'],0)
 	st.markdown(f"<h3> Your account balance is equal to <span style='font-weight:bolder;font-size:30px;'>{wallet:.0f}$</span> </h3>",unsafe_allow_html=True)
 
@@ -34,8 +35,9 @@ def main():
 	# ROW 4 ------------------------------------------------------------------------
 	row4_1, row4_spacer1, row4_2 = st.beta_columns((2, .2, 1))
 	start_date = datetime.combine(start_date, datetime.min.time())
-	trades = open_data(since=start_date)
-	stats = get_statistics_on_trades(trades)
+	trades = utils.get_trades(exchange,since=start_date)
+	stats = utils.get_statistics_on_trades(trades)
+
 	with row4_1:
 		row4_1.subheader('Statistics per day:')
 		row4_1.write(stats)
@@ -51,7 +53,7 @@ def main():
 
 	# ROW 5 ------------------------------------------------------------------------
 	st.subheader('Evolution of the amount (usd):')
-	plot_balance(stats)
+	utils.plot_balance(stats)
 
 
 	update = st.button('Update')
